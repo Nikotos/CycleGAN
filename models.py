@@ -9,6 +9,10 @@ from residualBlock import *
     - Convolution
     - Instance normalization
     - Non-Linear function
+    
+    
+    We use instance normalization in case of
+    developing image2image network
 """
 class ConvUnit(nn.Module):
     def __init__(self, inChannels, outChannels, kernelSize, stride, pad):
@@ -46,6 +50,8 @@ class Encoder(nn.Module):
 
 """
     We assume that inChannels can be diveded by 4
+    
+    (straightforward barebone implementation)
 """
 class SimpleResBlock(nn.Module):
     def __init__(self, inChannels):
@@ -98,8 +104,12 @@ class Converter(nn.Module):
         return x
 
 
-
-
+"""
+    Several units stacked together with the aim of convinience
+    - Deconvolution
+    - Instance normalization
+    - Non-Linear function
+"""
 class DeConvUnit(nn.Module):
     def __init__(self, inChannels, outChannels, kernelSize, stride, pad):
         super(DeConvUnit, self).__init__()
@@ -163,12 +173,18 @@ class Transformer(nn.Module):
 """
     Distinguishes generated images from real
     'PatchGAN' imlementation
+    the most efficient patch size is considerd as 70x70
 """
-class Discriminator
+class PatchGAN(nn.Module)
     def __init__(self):
-        super(Decoder, self).__init__()
+        super(Discriminator, self).__init__()
         self.features = nn.Sequential()
-
+        self.features.add_module('conv1', ConvUnit(3, 64, 4, 2, 0))         # 70x70 -> 34x34
+        self.features.add_module('conv2', ConvUnit(64, 128, 4, 2, 0))       # 34x34 -> 16x16
+        self.features.add_module('conv3', ConvUnit(128, 256, 4, 2, 1))      # 16x16 -> 8x8
+        self.features.add_module('conv4', ConvUnit(256, 512, 4, 2, 3))      # 8x8 -> 4x4
+        self.features.add_module('conv5', ConvUnit(512, 1, 4, 1, 0))        # 4x4 -> 1x1
+        self.features.add_module('activation', nn.Sigmoid())
 
     def forward(self, x):
         x = self.features(x)
