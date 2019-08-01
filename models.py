@@ -1,7 +1,6 @@
 import torch
 import torch.nn as nn
 from config import *
-from residualBlock import *
 
 
 """
@@ -170,22 +169,40 @@ class Transformer(nn.Module):
 
 
 
+
+
+
 """
+    Patch size = Receptive Field !!!
+    
     Distinguishes generated images from real
     'PatchGAN' imlementation
-    the most efficient patch size is considerd as 70x70
+    the most efficient patch size is considerd as 70x70  (Receptive Field)
+    
+    'Patch size' is another name for receptive field
+    
+    The idea behind this method is to run this fully convolutional network across
+    the whole image to get the tensor of probabilities of corresponding patch being real
 """
-class PatchGAN(nn.Module)
+
+class PatchGAN(nn.Module):
     def __init__(self):
-        super(Discriminator, self).__init__()
+        super(PatchGAN, self).__init__()
         self.features = nn.Sequential()
-        self.features.add_module('conv1', ConvUnit(3, 64, 4, 2, 0))         # 70x70 -> 34x34
-        self.features.add_module('conv2', ConvUnit(64, 128, 4, 2, 0))       # 34x34 -> 16x16
-        self.features.add_module('conv3', ConvUnit(128, 256, 4, 2, 1))      # 16x16 -> 8x8
-        self.features.add_module('conv4', ConvUnit(256, 512, 4, 2, 3))      # 8x8 -> 4x4
-        self.features.add_module('conv5', ConvUnit(512, 1, 4, 1, 0))        # 4x4 -> 1x1
+        self.features.add_module('conv1', ConvUnit(3, 64, 4, 2, 1))
+        self.features.add_module('conv2', ConvUnit(64, 128, 4, 2, 1))
+        self.features.add_module('conv3', ConvUnit(128, 256, 4, 2, 1))
+        self.features.add_module('conv4', ConvUnit(256, 512, 4, 2, 0))
+        self.features.add_module('conv5', nn.Conv2d(512, 1, 4, 2, 0))
         self.features.add_module('activation', nn.Sigmoid())
 
+    
+    """
+        In case of 256x256 input network output will be 6x6 feaure mat
+        we need to calcute average across all tensor
+    """
     def forward(self, x):
         x = self.features(x)
-        return x
+        return x.mean()
+
+
