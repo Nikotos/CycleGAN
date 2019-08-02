@@ -14,6 +14,7 @@ import cv2
     - 2 correspondinf discriminators
     - loading data loaders
     - setting up optimizers
+    - setting up criterion
 """
 transformerForward = Transformer()
 transformerBackward = Transformer()
@@ -29,6 +30,20 @@ optimizerBackward = optim.Adam(transformerBackward.parameters(), lr = learningRa
 
 lastFewGenSamples = ReplayMemory(50)
 
+bceLoss = nn.BCELoss()
+
+
+"""
+    as it was stated in 'ganhacks' noisy labels encourages model
+    to better convergence
+    ref [https://github.com/jaingaurav3/GAN-Hacks]
+"""
+
+def noisyRealLabel():
+    return np.random.uniform(0.8, 1.2)
+
+def noisyFakeLabel():
+    return np.random.uniform(0.0, 0.3)
 
 
 """
@@ -54,12 +69,33 @@ lastFewGenSamples = ReplayMemory(50)
     6) stack two losses together and update weights of both transformers
 """
 
+
+"""
+    1-st Stage
+    performs real picture pass
+    returns correspondinf loss
+"""
+def realPicturePass(discriminatorNet, dataLoader):
+    discriminatorNet.zero_grad()
+    sample = dataLoader.get().to(device = device, dtype = dtype)
+    label = noisyRealLabel()
+    prediction = discriminatorNet(sample).view(-1)
+    loss = bceLoss(prediction, label)
+    return loss
+
+
+
+
+
 for e in range(config.epochs):
     """
         Epoch setup, such as lr decay
     """
     for i in range(config.iterations):
-        
+
+
+
+
 
 
 

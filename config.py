@@ -6,9 +6,10 @@ import torch
 
 
 device = "cpu"
-learningRate = 0.0002
+dtype = torch.float32
 imageShape = (256,256,3)
 
 
 epochs = 30
 iterations = 1000
+learningRate = 0.0002
