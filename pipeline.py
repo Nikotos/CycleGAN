@@ -27,3 +27,24 @@ dataLoaderB = loadFromFile("dataLoaderB.pkl")
 optimizerForward = optim.Adam(transformerForward.parameters(), lr = learningRate, betas = (beta1, 0.999))
 optimizerBackward = optim.Adam(transformerBackward.parameters(), lr = learningRate, betas = (beta1, 0.999))
 
+
+
+"""
+    Main Pipeline
+    We need to bulid general logic of training network
+    with both adversial and cycle consistency loss
+    
+    1) perform real picture pass through discriminators
+"""
+
+for e in range(config.epochs):
+    """
+        Epoch setup, such as lr decay
+    """
+    for i in range(config.iterations):
+        
+
+
+
+
+

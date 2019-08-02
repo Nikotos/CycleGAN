@@ -128,6 +128,9 @@ class DeConvUnit(nn.Module):
 
 """
     Decodes internal feature tensor to picture of domain 'Y'
+    
+    * According to 'ganhacks' the last activation Generator is Tanh
+        the question is - do we need normalization before it
 """
 class Decoder(nn.Module):
     def __init__(self):
@@ -138,7 +141,8 @@ class Decoder(nn.Module):
         """
         self.features.add_module('deconv1', DeConvUnit(256, 128, 3, 2, 1)) # 64x64 -> 128x128
         self.features.add_module('deconv2', DeConvUnit(128, 64, 3, 2, 1)) # 128x128 -> 256x256
-        self.features.add_module('conv3', ConvUnit(64, 3, 7, 1, 3))       # 256x256 -> 256x256
+        self.features.add_module('conv3', nn.Conv2d(64, 3, 7, 1, 3))       # 256x256 -> 256x256
+        self.features.add_module('tanh', nn.Tanh()) # according to ganhacks
 
             
     def forward(self, x):
@@ -198,8 +202,9 @@ class PatchGAN(nn.Module):
 
     
     """
-        In case of 256x256 input network output will be 6x6 feaure mat
-        we need to calcute average across all tensor
+        In case of [256x256] input network output will be [6x6] feature map
+        and we need to calcute average across all tensor
+        i.e. we averaging all probabilities of corresponding pathces being real or fake
     """
     def forward(self, x):
         x = self.features(x)
