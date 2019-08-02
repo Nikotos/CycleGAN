@@ -36,8 +36,22 @@ lastFewGenSamples = ReplayMemory(50)
     We need to bulid general logic of training network
     with both adversial and cycle consistency loss
     
-    1) perform the real picture pass through discriminators
-    2)
+    1) perform the real picture pass through discriminators (only one part of loss)
+    
+    2) perform fake image pass through discriminators
+       generate one sample (A->B and B->A) (detach it) and add it to memory and then
+       take picture from replay memory (to decrease model oscillations)
+       
+    3) update both discriminator weights
+    
+    4) Genetare both images, A->B and B->A, calculate both adversarial loss
+       using both discriminators, store it
+       
+    5) Complete the cycle, generating A_cycle from (A->B) and B_cycle from (B->A)
+       calsulate cycle consistency loss, multiply by hyperparameter
+       (mean abs loss)
+       
+    6) stack two losses together and update weights of both transformers
 """
 
 for e in range(config.epochs):
