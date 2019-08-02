@@ -44,10 +44,10 @@ bceLoss = nn.BCELoss()
 """
 
 def noisyRealLabel():
-    return np.random.uniform(0.8, 1.2)
+    return torch.tensor(np.random.uniform(0.8, 1.2))
 
 def noisyFakeLabel():
-    return np.random.uniform(0.0, 0.3)
+    return torch.tensor(np.random.uniform(0.0, 0.3))
 
 
 """
@@ -63,7 +63,7 @@ def noisyFakeLabel():
        
     3) update both discriminator weights
     
-    4) Genetare both images, A->B and B->A, calculate both adversarial loss
+    4) Using already generated images, A->B and B->A, calculate both adversarial loss
        using both discriminators, store it
        
     5) Complete the cycle, generating A_cycle from (A->B) and B_cycle from (B->A)
@@ -102,7 +102,7 @@ def realPicturePass(discriminatorNet, dataLoader):
     2-st Stage
     performs transformed picture pass to train discriminator
     taeks fake image from memory
-    returns corresponding loss
+    returns corresponding loss and generated image
 """
 def fakePicturePass(transformerNet, dataLoader, memory, discriminator):
     # firstly create image and then add it to memory
@@ -115,6 +115,19 @@ def fakePicturePass(transformerNet, dataLoader, memory, discriminator):
     label = noisyFakeLabel()
     prediction = discriminator(imageFakeOld).view(-1)
     loss = bceLoss(prediction, label)
+    return loss, imageFake
+
+
+"""
+    4-th stage
+    generate image with transformer and evaluate it with discriminator
+    it is important to remind that generator 'thinks' that generated images are real
+    (it is part of Nash minimax game)
+"""
+def generatedImageEvaluation(imageGenerated, discriminator):
+    label = noisyRealLabel()
+    prediction = discriminator(imageGenerated).view(-1)
+    loss = bceLoss(prediction, label)
     return loss
 
 
@@ -122,17 +135,24 @@ def fakePicturePass(transformerNet, dataLoader, memory, discriminator):
 prepareMemory(transformerForward, memoryFakeB, dataLoaderA)
 prepareMemory(transformerBackward, memoryFakeA, dataLoaderB)
 
+discriminatorA.train()
+discriminatorB.train()
+transformerForward.train()
+transformerBackward.train()
+
 for e in range(config.epochs):
     """
         Epoch setup, such as lr decay
     """
     for i in range(config.iterations):
+        
         lossRealDiscA = realPicturePass(discriminatorA, dataLoaderA)
         lossRealDiscB = realPicturePass(discriminatorB, dataLoaderB)
 
-        lossFakeDiscA = fakePicturePass(transformerForward, dataLoaderA, memoryFakeB, discriminatorB)
-        lossFakeDiscB = fakePicturePass(transformerBackward, dataLoaderB, memoryFakeA, discriminatorA)
+        lossFakeDiscA, imageFakeB = fakePicturePass(transformerForward, dataLoaderA, memoryFakeB, discriminatorB)
+        lossFakeDiscB, imageFakeA = fakePicturePass(transformerBackward, dataLoaderB, memoryFakeA, discriminatorA)
 
+        # 3-rd stage
         totalLossA = lossRealDiscA + lossFakeDiscA
         totalLossB = lossRealDiscB + lossFakeDiscB
 
@@ -142,6 +162,10 @@ for e in range(config.epochs):
         optimizerDiscA.step()
         optimizerDiscB.step()
 
+
+        # 4-th step
+        lossGenAdversarialForward = generatedImageEvaluation(imageFakeB, discriminatorB)
+        lossGenAdversarialBackward = generatedImageEvaluation(imageFakeA, discriminatorA)
 
 
 
