@@ -27,6 +27,8 @@ dataLoaderB = loadFromFile("dataLoaderB.pkl")
 optimizerForward = optim.Adam(transformerForward.parameters(), lr = learningRate, betas = (beta1, 0.999))
 optimizerBackward = optim.Adam(transformerBackward.parameters(), lr = learningRate, betas = (beta1, 0.999))
 
+lastFewGenSamples = ReplayMemory(50)
+
 
 
 """
@@ -34,7 +36,8 @@ optimizerBackward = optim.Adam(transformerBackward.parameters(), lr = learningRa
     We need to bulid general logic of training network
     with both adversial and cycle consistency loss
     
-    1) perform real picture pass through discriminators
+    1) perform the real picture pass through discriminators
+    2)
 """
 
 for e in range(config.epochs):

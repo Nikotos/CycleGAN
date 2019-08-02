@@ -33,3 +33,31 @@ class DataLoader:
     def get(self):
         index = np.random.randint(0, len(self.storage))
         return self.storage[index]
+
+
+
+"""
+    Some reinforcement learning hacks
+"""
+
+class ReplayMemory:
+    def __init__(self, size):
+        self.data = []
+        self.size = size
+        self.currentPosition = 0
+    
+    def __len__(self):
+        return len(self.dataset)
+    
+    def add(self, element):
+        if (len(self.data) < self.size):
+            self.data.append(element)
+        else:
+            self.data[self.currentPosition] = element
+            self.currentPosition = (self.currentPosition + 1) % self.size
+
+    def get(self):
+        index = np.random.randint(0, self.size)
+        return self.data[i]
+
+
