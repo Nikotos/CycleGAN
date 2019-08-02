@@ -25,10 +25,14 @@ discriminatorB = PatchGAN()
 dataLoaderA = loadFromFile("dataLoaderA.pkl")
 dataLoaderB = loadFromFile("dataLoaderB.pkl")
 
-optimizerForward = optim.Adam(transformerForward.parameters(), lr = learningRate, betas = (beta1, 0.999))
-optimizerBackward = optim.Adam(transformerBackward.parameters(), lr = learningRate, betas = (beta1, 0.999))
+optimizerTransForward = optim.Adam(transformerForward.parameters(), lr = learningRate, betas = (beta1, 0.999))
+optimizerTransBackward = optim.Adam(transformerBackward.parameters(), lr = learningRate, betas = (beta1, 0.999))
 
-lastFewGenSamples = ReplayMemory(50)
+optimizerDiscA = optim.Adam(transformerForward.parameters(), lr = learningRate, betas = (beta1, 0.999))
+optimizerDiscB = optim.Adam(transformerForward.parameters(), lr = learningRate, betas = (beta1, 0.999))
+
+memoryFakeA = ReplayMemory(replayMemorySize)
+memoryFakeB = ReplayMemory(replayMemorySize)
 
 bceLoss = nn.BCELoss()
 
@@ -36,7 +40,7 @@ bceLoss = nn.BCELoss()
 """
     as it was stated in 'ganhacks' noisy labels encourages model
     to better convergence
-    ref [https://github.com/jaingaurav3/GAN-Hacks]
+    reference [https://github.com/jaingaurav3/GAN-Hacks]
 """
 
 def noisyRealLabel():
@@ -71,9 +75,19 @@ def noisyFakeLabel():
 
 
 """
+    preparing memory of generated images
+    to use them to train discriminator
+"""
+def prepareMemory(transformerNet, memory, dataLoader):
+    for i in range(config.replayMemorySize):
+        element1 = dataLoader.get()
+        elementFake2 = transformerNet(element1)
+        memory.add(elementFake2)
+
+"""
     1-st Stage
     performs real picture pass
-    returns correspondinf loss
+    returns corresponding loss
 """
 def realPicturePass(discriminatorNet, dataLoader):
     discriminatorNet.zero_grad()
@@ -84,14 +98,49 @@ def realPicturePass(discriminatorNet, dataLoader):
     return loss
 
 
+"""
+    2-st Stage
+    performs transformed picture pass to train discriminator
+    taeks fake image from memory
+    returns corresponding loss
+"""
+def fakePicturePass(transformerNet, dataLoader, memory, discriminator):
+    # firstly create image and then add it to memory
+    image = dataLoader.get()
+    imageFake = transformerNet(image)
+    memory.add(imageFake.detach())
+
+    # then take one image from memory and calculate loss on it
+    imageFakeOld = memory.get()
+    label = noisyFakeLabel()
+    prediction = discriminator(imageFakeOld).view(-1)
+    loss = bceLoss(prediction, label)
+    return loss
 
 
+
+prepareMemory(transformerForward, memoryFakeB, dataLoaderA)
+prepareMemory(transformerBackward, memoryFakeA, dataLoaderB)
 
 for e in range(config.epochs):
     """
         Epoch setup, such as lr decay
     """
     for i in range(config.iterations):
+        lossRealDiscA = realPicturePass(discriminatorA, dataLoaderA)
+        lossRealDiscB = realPicturePass(discriminatorB, dataLoaderB)
+
+        lossFakeDiscA = fakePicturePass(transformerForward, dataLoaderA, memoryFakeB, discriminatorB)
+        lossFakeDiscB = fakePicturePass(transformerBackward, dataLoaderB, memoryFakeA, discriminatorA)
+
+        totalLossA = lossRealDiscA + lossFakeDiscA
+        totalLossB = lossRealDiscB + lossFakeDiscB
+
+        totalLossA.backward()
+        totalLossB.backward()
+
+        optimizerDiscA.step()
+        optimizerDiscB.step()
 
 
 

@@ -8,6 +8,7 @@ import torch
 device = "cpu"
 dtype = torch.float32
 imageShape = (256,256,3)
+replayMemorySize = 50
 
 
 epochs = 30
