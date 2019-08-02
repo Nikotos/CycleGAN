@@ -14,7 +14,7 @@ import cv2
     - 2 correspondinf discriminators
     - loading data loaders
     - setting up optimizers
-    - setting up criterion
+    - setting up criterions
 """
 transformerForward = Transformer()
 transformerBackward = Transformer()
@@ -35,6 +35,13 @@ memoryFakeA = ReplayMemory(replayMemorySize)
 memoryFakeB = ReplayMemory(replayMemorySize)
 
 bceLoss = nn.BCELoss()
+
+
+"""
+    in some studies people use perceptual loss with vgg-11 or vgg-19
+"""
+def cycleConsistencyLoss(x,y):
+    return np.mean(np.abc(x - y))
 
 
 """
@@ -89,11 +96,10 @@ def prepareMemory(transformerNet, memory, dataLoader):
     performs real picture pass
     returns corresponding loss
 """
-def realPicturePass(discriminatorNet, dataLoader):
+def realPicturePass(discriminatorNet, imageOriginal):
     discriminatorNet.zero_grad()
-    sample = dataLoader.get().to(device = device, dtype = dtype)
     label = noisyRealLabel()
-    prediction = discriminatorNet(sample).view(-1)
+    prediction = discriminatorNet(imageOriginal).view(-1)
     loss = bceLoss(prediction, label)
     return loss
 
@@ -132,6 +138,10 @@ def generatedImageEvaluation(imageGenerated, discriminator):
 
 
 
+def cycleConsistencyEvaluation(imageOriginal, imageGenerated, transformerBackNet)
+
+
+
 prepareMemory(transformerForward, memoryFakeB, dataLoaderA)
 prepareMemory(transformerBackward, memoryFakeA, dataLoaderB)
 
@@ -145,9 +155,11 @@ for e in range(config.epochs):
         Epoch setup, such as lr decay
     """
     for i in range(config.iterations):
+        imageOriginalA = dataLoaderA.get().to(device = device, dtype = dtype)
+        imageOriginalB = dataLoaderB.get().to(device = device, dtype = dtype)
         
-        lossRealDiscA = realPicturePass(discriminatorA, dataLoaderA)
-        lossRealDiscB = realPicturePass(discriminatorB, dataLoaderB)
+        lossRealDiscA = realPicturePass(discriminatorA, imageOriginalA)
+        lossRealDiscB = realPicturePass(discriminatorB, imageOriginalB)
 
         lossFakeDiscA, imageFakeB = fakePicturePass(transformerForward, dataLoaderA, memoryFakeB, discriminatorB)
         lossFakeDiscB, imageFakeA = fakePicturePass(transformerBackward, dataLoaderB, memoryFakeA, discriminatorA)
