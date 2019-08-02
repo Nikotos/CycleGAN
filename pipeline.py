@@ -137,9 +137,16 @@ def generatedImageEvaluation(imageGenerated, discriminator):
     return loss
 
 
-
+"""
+    5-th stage
+    competing cycle
+    - generating image back
+    - calculate cycle loss between original image and generated back
+"""
 def cycleConsistencyEvaluation(imageOriginal, imageGenerated, transformerBackNet)
-
+    imageGeneratedBack = transformerBackNet(imageGenerated)
+    loss = cycleConsistencyLoss(imageOriginal, imageGeneratedBack)
+    return loss
 
 
 prepareMemory(transformerForward, memoryFakeB, dataLoaderA)
@@ -155,31 +162,40 @@ for e in range(config.epochs):
         Epoch setup, such as lr decay
     """
     for i in range(config.iterations):
+        # 1-st stage
         imageOriginalA = dataLoaderA.get().to(device = device, dtype = dtype)
         imageOriginalB = dataLoaderB.get().to(device = device, dtype = dtype)
         
         lossRealDiscA = realPicturePass(discriminatorA, imageOriginalA)
         lossRealDiscB = realPicturePass(discriminatorB, imageOriginalB)
 
+        # 2-nd stage
         lossFakeDiscA, imageFakeB = fakePicturePass(transformerForward, dataLoaderA, memoryFakeB, discriminatorB)
         lossFakeDiscB, imageFakeA = fakePicturePass(transformerBackward, dataLoaderB, memoryFakeA, discriminatorA)
 
         # 3-rd stage
-        totalLossA = lossRealDiscA + lossFakeDiscA
-        totalLossB = lossRealDiscB + lossFakeDiscB
+        totalDLossA = lossRealDiscA + lossFakeDiscA
+        totalDLossB = lossRealDiscB + lossFakeDiscB
 
-        totalLossA.backward()
-        totalLossB.backward()
+        totalDLossA.backward()
+        totalDLossB.backward()
 
         optimizerDiscA.step()
         optimizerDiscB.step()
 
 
-        # 4-th step
+        # 4-th stage
         lossGenAdversarialForward = generatedImageEvaluation(imageFakeB, discriminatorB)
         lossGenAdversarialBackward = generatedImageEvaluation(imageFakeA, discriminatorA)
 
 
+        # 5-th stage
+        lossCycleA = cycleConsistencyEvaluation(imageOriginalA, imageFakeB, transformerBackward)
+        lossCycleB = cycleConsistencyEvaluation(imageOriginalB, imageFakeA, transformerForward)
+
+
+        # 6-th stage
+        totalGenLossA = lossGenAdversarialForward
 
 
 
