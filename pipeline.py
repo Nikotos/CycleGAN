@@ -61,8 +61,24 @@ def noisyFakeLabel():
     Information section
     To track training process we need not only loss 
     but also discriminators predictions 
+    - D_A pred (real and fake)
+    - D_B pred (real and fake)
+    - Loss D 
+    - Loss Adversarial
+    - Loss Cycle
 """
 
+trackDAReal = InfoTracker("DA(x)", 10)
+trackDAFake = InfoTracker("DA(G(x))", 10)
+
+trackDBReal = InfoTracker("DB(x)", 10)
+trackDBFake = InfoTracker("DB(G(x))", 10)
+
+trackDiscLossReal = InfoTracker("DLossReal", 10)
+trackDiscLossFake = InfoTracker("DLossFake", 10)
+
+trackGenLossAdv = InfoTracker("GLossForward", 10)
+trackGenLossCycle = InfoTracker("cycleLoss", 10)
 
 """
     Main Pipeline

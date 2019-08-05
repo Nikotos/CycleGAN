@@ -17,6 +17,9 @@ class InfoTracker:
 			self.currentPos = (self.currentPos + 1) % self.size
 
 
-	def verbose(self):
+	def d(self, data):
+		return "[" + str(data) + "]"
+
+	def verbose(self, epoch, iter):
 		mean = sum(self.storage) / self.size
-		print(name, "[", mean, "]")
+		print("epoch -", d(epoch), "iter -", d(iter), name, "-", d(mean))
