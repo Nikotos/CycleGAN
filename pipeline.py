@@ -38,7 +38,7 @@ bceLoss = nn.BCELoss()
 
 
 """
-    in some studies people use perceptual loss with vgg-11 or vgg-19
+    in some articles people use perceptual loss with vgg-11 or vgg-19
 """
 def cycleConsistencyLoss(x,y):
     return np.mean(np.abc(x - y))
@@ -55,6 +55,13 @@ def noisyRealLabel():
 
 def noisyFakeLabel():
     return torch.tensor(np.random.uniform(0.0, 0.3))
+
+
+"""
+    Information section
+    To track training process we need not only loss 
+    but also discriminators predictions 
+"""
 
 
 """
