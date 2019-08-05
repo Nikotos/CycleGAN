@@ -186,7 +186,7 @@ class Transformer(nn.Module):
     'Patch size' is another name for receptive field
     
     The idea behind this method is to run this fully convolutional network across
-    the whole image to get the tensor of probabilities of corresponding patch being real
+    the whole image to get the tensor of probabilities of corresponding 'patch' being real
 """
 
 class PatchGAN(nn.Module):

@@ -195,7 +195,12 @@ for e in range(config.epochs):
 
 
         # 6-th stage
-        totalGenLossA = lossGenAdversarialForward
+        totalGenLoss = lossGenAdversarialForward + lossGenAdversarialBackward + lossCycleA + lossCycleB
+        totalGenLoss.backward()
+
+        optimizerTransForward.step()
+        optimizerTransBackward.step()
+
 
 
 
